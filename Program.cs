@@ -1,101 +1,105 @@
 ﻿using System;
 using System.Linq;
 
-class Program
+class Game
 {
     const int Width = 5;
     const int Height = 5;
+    const char Ship = 'S';
     static char[,] field = new char[Height, Width];
-    static bool[,] ships = new bool[Height, Width];
     static int shipsCount = 3;
+    static int numberofAttempts = 10;  
 
     static void Main(string[] args)
     {
-        InitializeField();
-        PlaceShips();
-        GameLoop();
+        var game = new Game();
+        game.Run();
     }
 
-    static void InitializeField()
+    void Run()
     {
+        GenerateField();
+
+        while (!IsEndGame())
+        {
+            Console.Clear();
+            DrawField();
+
+            Console.WriteLine($"number of attempts: {numberofAttempts}");  
+
+            if (numberofAttempts > 0)
+            {
+                var shot = GetShot();
+                if (!IsValidShot(shot))
+                {
+                    Console.WriteLine("Invalid coordinates!");
+                    continue;
+                }
+
+                ProcessShot(shot);
+                numberofAttempts--; 
+            }
+            System.Threading.Thread.Sleep(750);
+        }
+
+        if (shipsCount == 0)
+        {
+            Console.WriteLine("УИИИИИИИИ");
+        }
+        else
+        {
+            Console.WriteLine("Game over");
+        }
+    }
+
+    bool IsEndGame() => shipsCount == 0 || numberofAttempts <= 0; 
+
+    void GenerateField()
+    {
+        Random random = new Random();
         for (int i = 0; i < Height; i++)
         {
             for (int j = 0; j < Width; j++)
             {
                 field[i, j] = '.';
-                ships[i, j] = false;
             }
         }
-    }
-
-    static void PlaceShips()
-    {
-        Random rand = new Random();
-        int placedShips = 0;
-
-        while (placedShips < shipsCount)
+        for (int i = 0; i < shipsCount; i++)
         {
-            int x = rand.Next(0, Height);
-            int y = rand.Next(0, Width);
-
-            if (!ships[x, y])
+            int x, y;
+            do
             {
-                ships[x, y] = true;
-                field[x, y] = 'S';
-                placedShips++;
-            }
+                x = random.Next(Width);
+                y = random.Next(Height);
+            } while (field[y, x] == Ship);
+
+            field[y, x] = Ship;
         }
     }
 
-    static void GameLoop()
+    bool IsValidShot((int, int) shot)
     {
-        bool gameRunning = true;
+        return shot.Item1 >= 0 && shot.Item1 < Height && shot.Item2 >= 0 && shot.Item2 < Width;
+    }
 
-        while (gameRunning)
+    void ProcessShot((int, int) shot)
+    {
+        if (field[shot.Item1, shot.Item2] == Ship)
         {
-            Console.Clear();
-            DrawField();
-
-            var shot = GetShot();
-            if (shot.Item1 < 0 || shot.Item1 >= Height || shot.Item2 < 0 || shot.Item2 >= Width)
-            {
-                Console.WriteLine("Invalid coordinates!");
-                continue;
-            }
-
-            if (ships[shot.Item1, shot.Item2])
-            {
-                field[shot.Item1, shot.Item2] = 'X';
-                ships[shot.Item1, shot.Item2] = false;
-                Console.WriteLine("Hit!");
-            }
-            else
-            {
-                field[shot.Item1, shot.Item2] = 'O';
-                Console.WriteLine("Miss!");
-            }
-
-            if (IsGameOver())
-            {
-                Console.Clear();
-                DrawField();
-                Console.WriteLine("УИИИИИИИИ!");
-                gameRunning = false;
-            }
-            else
-            {
-                Console.WriteLine("Press any key to continue...");
-                Console.ReadKey();
-            }
-
-            System.Threading.Thread.Sleep(500);
+            field[shot.Item1, shot.Item2] = 'X';
+            shipsCount--;
+            Console.WriteLine("Hit!");
+        }
+        else
+        {
+            field[shot.Item1, shot.Item2] = 'O';
+            Console.WriteLine("Miss!");
         }
     }
 
-    static (int, int) GetShot()
+    (int, int) GetShot()
     {
         string input;
-        int row, col;
         while (true)
         {
             Console.WriteLine("Enter coordinates: ");
@@ -106,26 +110,18 @@ class Program
                 char columnChar = input[0];
                 char rowChar = input[1];
 
-                if (columnChar >= 'A' && columnChar < 'A' + Width && rowChar >= '1' && rowChar <= '5')
+                int row = rowChar - '1';
+                int col = columnChar - 'A';
+
+                if (col >= 0 && col < Width && row >= 0 && row < Height)
                 {
-                    row = rowChar - '1';
-                    col = columnChar - 'A';
                     return (row, col);
                 }
             }
         }
     }
 
-    static bool IsGameOver()
-    {
-        foreach (var ship in ships)
-        {
-            if (ship) return false;
-        }
-        return true;
-    }
-
-    static void DrawField()
+    void DrawField()
     {
         Console.WriteLine("Battlefield:");
         Console.WriteLine("   " + string.Join(" ", GetColumnLabels()));
@@ -140,7 +136,7 @@ class Program
         }
     }
 
-    static string[] GetColumnLabels()
+    string[] GetColumnLabels()
     {
         char[] columns = new char[Width];
         for (int i = 0; i < Width; i++)
