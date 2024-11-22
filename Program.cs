@@ -72,6 +72,8 @@ class Game
     const char hitSymbol = '9';
     const char missSymbol = '1';
 
+    (int, int) playerShot;
+
     static void Main(string[] args)
     {
         var game = new Game();
@@ -81,14 +83,13 @@ class Game
     void Run()
     {
         field = new Field(Height, Width);  
-
         GenerateField();
 
         while (!IsEndGame())
         {
-            Console.Clear();
-            DrawField();
-            PlayerInput();
+            Render();
+            GetInput();
+            Update();
         }
 
         if (shipsCount == 0)
@@ -102,21 +103,26 @@ class Game
     }
 
     bool IsEndGame() => shipsCount == 0 || numberofAttempts <= 0;
+    void Render()
+    {
+        Console.Clear();
+        DrawField();
+    }
 
-    void PlayerInput()
+    void Update()
+    {
+        ProcessShot(playerShot);
+        numberofAttempts--;
+    }
+    void GetInput()
     {
         Console.WriteLine($"Number of attempts: {numberofAttempts}");
-        var shot = GetShot();
-
-        if (!IsValidShot(shot))
+        playerShot = GetShot();
+        if (!IsValidShot(playerShot))
         {
             Console.WriteLine("Invalid coordinates!");
             return;
         }
-
-        ProcessShot(shot);
-        numberofAttempts--;
-        System.Threading.Thread.Sleep(750);
     }
 
     void GenerateField()
@@ -152,15 +158,16 @@ class Game
         {
             Console.WriteLine("Miss!");
         }
+        System.Threading.Thread.Sleep(750);
     }
 
-    (int, int) GetShot()
+    public (int, int) GetShot()
     {
         string input;
         while (true)
         {
             Console.WriteLine("Enter coordinates: ");
-            input = Console.ReadLine().ToUpper();
+            input = Console.ReadLine()?.ToUpper();
 
             if (input.Length == 2)
             {
