@@ -1,14 +1,76 @@
 ﻿using System;
 using System.Linq;
 
+class Cell
+{
+    public bool HasShip;
+    public bool IsHitted;
+
+    public Cell()
+    {
+        HasShip = false;
+        IsHitted = false;
+    }
+}
+
+class Field
+{
+    public Cell[,] Cells;
+    public int Height;
+    public int Width;
+
+    public Field(int height, int width)
+    {
+        Height = height;
+        Width = width;
+        Cells = new Cell[Height, Width];
+
+        for (int i = 0; i < Height; i++)
+        {
+            for (int j = 0; j < Width; j++)
+            {
+                Cells[i, j] = new Cell();
+            }
+        }
+    }
+
+    public void PlaceShip(int x, int y)
+    {
+        if (x >= 0 && x < Height && y >= 0 && y < Width)
+        {
+            Cells[x, y].HasShip = true;
+        }
+    }
+
+    public bool Attack(int x, int y)
+    {
+        if (x >= 0 && x < Height && y >= 0 && y < Width)
+        {
+            var cell = Cells[x, y];
+            if (cell.IsHitted)
+            {
+                return false; 
+            }
+            cell.IsHitted = true;
+            return cell.HasShip;
+        }
+        return false; 
+    }
+}
+
 class Game
 {
     const int Width = 5;
     const int Height = 5;
-    const char Ship = 'S';
-    static char[,] field = new char[Height, Width];
+    Field field;
+
     static int shipsCount = 3;
-    static int numberofAttempts = 10;  
+    static int numberofAttempts = 10;
+
+    const char ShipSymbol = 'I';
+    const char EmptySymbol = '_';
+    const char hitSymbol = '9';
+    const char missSymbol = '1';
 
     static void Main(string[] args)
     {
@@ -18,28 +80,15 @@ class Game
 
     void Run()
     {
+        field = new Field(Height, Width);  
+
         GenerateField();
 
         while (!IsEndGame())
         {
             Console.Clear();
             DrawField();
-
-            Console.WriteLine($"number of attempts: {numberofAttempts}");  
-
-            if (numberofAttempts > 0)
-            {
-                var shot = GetShot();
-                if (!IsValidShot(shot))
-                {
-                    Console.WriteLine("Invalid coordinates!");
-                    continue;
-                }
-
-                ProcessShot(shot);
-                numberofAttempts--; 
-            }
-            System.Threading.Thread.Sleep(750);
+            PlayerInput();
         }
 
         if (shipsCount == 0)
@@ -52,18 +101,27 @@ class Game
         }
     }
 
-    bool IsEndGame() => shipsCount == 0 || numberofAttempts <= 0; 
+    bool IsEndGame() => shipsCount == 0 || numberofAttempts <= 0;
+
+    void PlayerInput()
+    {
+        Console.WriteLine($"Number of attempts: {numberofAttempts}");
+        var shot = GetShot();
+
+        if (!IsValidShot(shot))
+        {
+            Console.WriteLine("Invalid coordinates!");
+            return;
+        }
+
+        ProcessShot(shot);
+        numberofAttempts--;
+        System.Threading.Thread.Sleep(750);
+    }
 
     void GenerateField()
     {
         Random random = new Random();
-        for (int i = 0; i < Height; i++)
-        {
-            for (int j = 0; j < Width; j++)
-            {
-                field[i, j] = '.';
-            }
-        }
         for (int i = 0; i < shipsCount; i++)
         {
             int x, y;
@@ -71,28 +129,27 @@ class Game
             {
                 x = random.Next(Width);
                 y = random.Next(Height);
-            } while (field[y, x] == Ship);
+            } while (field.Cells[y, x].HasShip);
 
-            field[y, x] = Ship;
+            field.PlaceShip(x, y);
         }
     }
 
     bool IsValidShot((int, int) shot)
     {
-        return shot.Item1 >= 0 && shot.Item1 < Height && shot.Item2 >= 0 && shot.Item2 < Width;
+        var (x, y) = shot;
+        return y >= 0 && y < Height && x >= 0 && x < Width;
     }
 
     void ProcessShot((int, int) shot)
     {
-        if (field[shot.Item1, shot.Item2] == Ship)
+        if (field.Attack(shot.Item1, shot.Item2))
         {
-            field[shot.Item1, shot.Item2] = 'X';
-            shipsCount--;
             Console.WriteLine("Hit!");
+            shipsCount--;
         }
         else
         {
-            field[shot.Item1, shot.Item2] = 'O';
             Console.WriteLine("Miss!");
         }
     }
@@ -130,7 +187,14 @@ class Game
             Console.Write((i + 1).ToString().PadRight(2));
             for (int j = 0; j < Width; j++)
             {
-                Console.Write(field[i, j] + " ");
+                char cell = field.Cells[i, j].IsHitted switch
+                {
+                    true when field.Cells[i, j].HasShip => hitSymbol,
+                    true => missSymbol,
+                    false when field.Cells[i, j].HasShip => ShipSymbol,
+                    _ => EmptySymbol
+                };
+                Console.Write(cell + " ");
             }
             Console.WriteLine();
         }
@@ -146,4 +210,3 @@ class Game
         return columns.Select(c => c.ToString()).ToArray();
     }
 }
-
