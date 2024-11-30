@@ -1,221 +1,275 @@
-﻿using SeaBattle;
-
-struct Cell
+﻿namespace SeaBattle
 {
-    public bool HasShip;
-    public bool IsHitted;
-}
-
-class Game
-{
-    public const int Width = 5;
-    public const int Height = 5;
-    Field player1Field = new Field(Height, Width);
-    Field player2Field = new Field(Height, Width);
-
-    static int shipsCount = 1;
-
-    const char ShipSymbol = 'S';
-    const char EmptySymbol = '.';
-    const char hitSymbol = 'X';
-    const char missSymbol = 'O';
-
-    Player player1 = new Player();
-    Player player2 = new Player();
-    (int, int) playerShot;
-
-    bool isPlayer1Turn = true; 
-
-    bool radarActivated = false; 
-
-    public void Run()
+    public class Game
     {
-        GenerateFields(); 
+        public const int Width = 5;
+        public const int Height = 5;
+        Field player1Field = new Field(Height, Width);
+        Field player2Field = new Field(Height, Width);
+        static int shipsCount = 8;
+        const char ShipSymbol = 'S';
+        const char EmptySymbol = '.';
+        const char hitSymbol = 'X';
+        const char missSymbol = 'O';
 
-        while (!IsEndGame())
+        (int, int) playerShot;
+
+        bool isPlayer1Turn = true;
+        bool radarActivated = false;
+
+        public void Run(bool isPvP, bool isAI = false, bool isEvE = false)
         {
-            Render();
-            GetInput();
-            Update();
+            GenerateFields();
 
-
-        }
-        Render();
-        Console.WriteLine(player1Field.GetShipCount() == 0 ? "Player 2 Wins!" : "Player 1 Wins!");
-    }
-
-    bool IsEndGame() => player1Field.GetShipCount() == 0 || player2Field.GetShipCount() == 0;
-
-    void Render()
-    {
-        Console.Clear();
-        DrawField();
-    }
-
-    void Update()
-    {
-        if (isPlayer1Turn)
-        {
-            ProcessShot(playerShot, player2Field);
-        }
-        else
-        {
-            ProcessShot(playerShot, player1Field);
-        }
-
-        isPlayer1Turn = !isPlayer1Turn;
-        radarActivated = false;
-    }
-
-    void GenerateFields()
-    {
-        GenerateField(player1Field);
-        GenerateField(player2Field); 
-    }
-
-    void GenerateField(Field field)
-    {
-        Random random = new Random();
-        for (int i = 0; i < shipsCount; i++)
-        {
-            int x, y;
-            do
+            while (!IsEndGame())
             {
-                x = random.Next(Width);
-                y = random.Next(Height);
-            } while (field.Cells[y, x].HasShip);
-
-            field.PlaceShip(x, y);
-        }
-    }
-
-    void GetInput()
-    {
-        Console.WriteLine(isPlayer1Turn ? "Player 1's Turn" : "Player 2's Turn");
-
-        if (isPlayer1Turn)
-        {
-            playerShot = player1.GetShot();
-        }
-        else
-        {
-            playerShot = player2.GetShot();
-        }
-
-        if (!radarActivated)
-        {
-            Console.WriteLine("Do you want to use radar to reveal a 3x3 or 5x5 area? (y/n)");
-            string radarInput = Console.ReadLine()?.ToLower();
-
-            if (radarInput == "y")
-            {
-                ActivateRadar(playerShot);
-            }
-        }
-
-        if (!IsValidShot(playerShot))
-        {
-            Console.WriteLine("Invalid coordinates!");
-        }
-    }
-
-    void ActivateRadar((int, int) shot)
-    {
-        radarActivated = true;
-
-        Console.WriteLine("Choose radar range: 3x3 or 5x5 (enter 3 or 5):");
-        string radarRangeInput = Console.ReadLine();
-
-        int chosenRange = 3;
-        if (radarRangeInput == "5")
-        {
-            chosenRange = 5;
-        }
-        if (isPlayer1Turn)
-        {
-            ShowRadar(shot, chosenRange, player2Field);
-        }
-        else
-        {
-            ShowRadar(shot, chosenRange, player1Field);
-        }
-    }
-
-
-    void ShowRadar((int, int) shot, int range, Field enemyField)
-    {
-        int startX = shot.Item1 - range / 2;
-        int startY = shot.Item2 - range / 2;
-
-        startX = Math.Max(0, startX);
-        startY = Math.Max(0, startY);
-
-        int endX = Math.Min(Width - 1, shot.Item1 + range / 2);
-        int endY = Math.Min(Height - 1, shot.Item2 + range / 2);
-        for (int i = startX; i <= endX; i++)
-        {
-            for (int j = startY; j <= endY; j++)
-            {
-                char cell = enemyField.Cells[i, j].HasShip ? ShipSymbol : EmptySymbol;
-                Console.Write(cell + " ");
-            }
-            Console.WriteLine();
-        }
-    }
-
-
-    bool IsValidShot((int, int) shot)
-    {
-        var (x, y) = shot;
-        return y >= 0 && y < Height && x >= 0 && x < Width;
-    }
-
-    void ProcessShot((int, int) shot, Field targetField)
-    {
-        if (targetField.Attack(shot.Item1, shot.Item2))
-        {
-            Console.WriteLine("Hit!");
-            shipsCount--;
-        }
-        else
-        {
-            Console.WriteLine("Miss!");
-        }
-        System.Threading.Thread.Sleep(1000);
-    }
-
-    void DrawField()
-    {
-        Console.WriteLine("Battlefield:");
-        Console.WriteLine("   " + string.Join(" ", GetColumnLabels()));
-
-        for (int i = 0; i < Height; i++)
-        {
-            Console.Write((i + 1).ToString().PadRight(2));
-            for (int j = 0; j < Width; j++)
-            {
-                Field currentField = isPlayer1Turn ? player1Field : player2Field;
-                var fieldCells = currentField.Cells[i, j];
-                char cell = fieldCells.IsHitted switch
+                Render(isPvP, isAI, isEvE);
+                if (!isEvE)
                 {
-                    true when fieldCells.HasShip => hitSymbol,
-                    true => missSymbol,
-                    false when fieldCells.HasShip => ShipSymbol,
-                    _ => EmptySymbol
-                };
-                Console.Write(cell + " ");
+                    GetInput();
+                    Update();
+                }
+                else if (isAI && isPlayer1Turn)
+                {
+                    AIShot();
+                    Update();
+                }
+                else if (isEvE)
+                {
+                    AIShot();
+                    Update();
+                    if (!IsEndGame())
+                    {
+                        AIShot(); 
+                        Update();
+                    }
+                }
             }
-            Console.WriteLine();
-        }
-    }
 
-    string[] GetColumnLabels()
-    {
-        char[] columns = new char[Width];
-        for (int i = 0; i < Width; i++)
-        {
-            columns[i] = (char)('A' + i);
+            Console.WriteLine(player1Field.GetShipCount() == 0 ? 
+                (isEvE ? "AI 2 Wins!" : "AI Wins!") : 
+                (isEvE ? "AI 1 Wins!" : "Player 1 Wins!"));
         }
-        return columns.Select(c => c.ToString()).ToArray();
-    }
+        void Update()
+        {
+            if (isPlayer1Turn)
+            {
+                ProcessShot(playerShot, player2Field);
+            }
+            else
+            {
+                ProcessShot(playerShot, player1Field);
+            }
+
+            isPlayer1Turn = !isPlayer1Turn;
+            radarActivated = false;
+        }
+        void Render(bool isPvP, bool isAI, bool isEvE)
+        {
+            Console.Clear();
+
+            if (isPvP)
+            {
+                Console.WriteLine("Player 1's Battlefield:");
+                DrawField(player1Field);
+                Console.WriteLine("Player 2's Battlefield:");
+                DrawField(player2Field);
+            }
+            else if (isAI)
+            {
+                Console.WriteLine("Your Battlefield:");
+                DrawField(player1Field);
+                Console.WriteLine("AI's Battlefield:");
+                DrawField(player2Field, false);
+            }
+            else if (isEvE)
+            {
+                Console.WriteLine("AI 1's Battlefield:");
+                DrawField(player1Field, false);
+                Console.WriteLine("AI 2's Battlefield:");
+                DrawField(player2Field, false);
+            }
+        }
+
+        void GenerateFields()
+        {
+            Field[] fields = { player1Field, player2Field };
+            foreach (var field in fields)
+            {
+                GenerateField(field);
+            }
+        }
+
+        void GenerateField(Field field)
+        {
+            Random random = new Random();
+            for (int i = 0; i < shipsCount; i++)
+            {
+                int x, y;
+                do
+                {
+                    x = random.Next(Width);
+                    y = random.Next(Height);
+                } while (field.Cells[y, x].HasShip);
+
+                field.PlaceShip(x, y);
+            }
+        }
+
+        bool IsEndGame() => player1Field.GetShipCount() == 0 || player2Field.GetShipCount() == 0;
+
+        void GetInput()
+        {
+            Console.WriteLine(isPlayer1Turn ? "Player 1's Turn" : "Player 2's Turn");
+            playerShot = GetShot();
+
+            if (!radarActivated)
+            {
+                Console.WriteLine("Do you want to use radar to reveal a 3x3 or 5x5 area? (y/n)");
+                string radarInput = Console.ReadLine()?.ToLower();
+
+                if (radarInput == "y")
+                {
+                    ActivateRadar(playerShot);
+                }
+            }
+
+            if (!IsValidShot(playerShot))
+            {
+                Console.WriteLine("Invalid coordinates!");
+            }
+        }
+
+        (int, int) GetShot()
+        {
+            string input;
+            while (true)
+            {
+                Console.WriteLine("Enter coordinates: ");
+                input = Console.ReadLine()?.ToUpper();
+
+                if (!string.IsNullOrEmpty(input) && input.Length == 2)
+                {
+                    char columnChar = input[0];
+                    char rowChar = input[1];
+
+                    int row = rowChar - '1';
+                    int col = columnChar - 'A';
+
+                    if (col >= 0 && col < Width && row >= 0 && row < Height)
+                    {
+                        return (row, col);
+                    }
+                }
+            }
+        }
+
+        void ActivateRadar((int, int) shot)
+        {
+            radarActivated = true;
+
+            Console.WriteLine("Choose radar range: 3x3 or 5x5 (enter 3 or 5):");
+            string radarRangeInput = Console.ReadLine();
+
+            int chosenRange = radarRangeInput == "5" ? 5 : 3;
+
+            if (isPlayer1Turn)
+            {
+                ShowRadar(shot, chosenRange, player2Field);
+            }
+            else
+            {
+                ShowRadar(shot, chosenRange, player1Field);
+            }
+        }
+
+        void ShowRadar((int, int) shot, int range, Field enemyField)
+        {
+            int startX = shot.Item1 - range / 2;
+            int startY = shot.Item2 - range / 2;
+
+            startX = Math.Max(0, startX);
+            startY = Math.Max(0, startY);
+
+            int endX = Math.Min(Width - 1, shot.Item1 + range / 2);
+            int endY = Math.Min(Height - 1, shot.Item2 + range / 2);
+
+            for (int i = startX; i <= endX; i++)
+            {
+                for (int j = startY; j <= endY; j++)
+                {
+                    char cell = enemyField.Cells[i, j].HasShip ? ShipSymbol : EmptySymbol;
+                    Console.Write(cell + " ");
+                }
+                Console.WriteLine();
+            }
+        }
+
+        bool IsValidShot((int, int) shot)
+        {
+            var (x, y) = shot;
+            return y >= 0 && y < Height && x >= 0 && x < Width;
+        }
+
+        void ProcessShot((int, int) shot, Field targetField)
+        {
+            if (targetField.Attack(shot.Item1, shot.Item2))
+            {
+                Console.WriteLine("Hit!");
+                shipsCount--;
+            }
+            else
+            {
+                Console.WriteLine("Miss!");
+            }
+            System.Threading.Thread.Sleep(1000);
+        }
+
+
+        void DrawField(Field field, bool showShips = true)
+        {
+            Console.WriteLine("   " + string.Join(" ", GetColumnLabels()));
+
+            for (int i = 0; i < Height; i++)
+            {
+                Console.Write((i + 1).ToString().PadRight(2));
+                for (int j = 0; j < Width; j++)
+                {
+                    var cell = field.Cells[i, j];
+                    char cellSymbol = cell.IsHitted switch
+                    {
+                        true when cell.HasShip => hitSymbol,
+                        true => missSymbol,
+                        false when showShips && cell.HasShip => ShipSymbol,
+                        _ => EmptySymbol
+                    };
+                    Console.Write(cellSymbol + " ");
+                }
+                Console.WriteLine();
+            }
+        }
+
+        void AIShot()
+        {
+            Random random = new Random();
+            int x = random.Next(Width);
+            int y = random.Next(Height);
+            var shot = (y, x);
+
+            Console.WriteLine($"AI shoots at: {GetColumnLabels()[x]}{y + 1}");
+            ProcessShot(shot, isPlayer1Turn ? player2Field : player1Field);
+        }
+
+        string[] GetColumnLabels()
+        {
+            char[] columns = new char[Width];
+            for (int i = 0; i < Width; i++)
+            {
+                columns[i] = (char)('A' + i);
+            }
+            return columns.Select(c => c.ToString()).ToArray();
+        }
+
+    }  
 }
+
