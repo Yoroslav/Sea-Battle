@@ -2,8 +2,8 @@
 {
     public class Game
     {
-        public const int Width = 5;
-        public const int Height = 5;
+        public const int Width = 2;
+        public const int Height = 2;
         Field player1Field = new Field(Height, Width);
         Field player2Field = new Field(Height, Width);
         static int shipsCount = 8;
@@ -13,43 +13,64 @@
         const char missSymbol = 'O';
 
         (int, int) playerShot;
-
         bool isPlayer1Turn = true;
         bool radarActivated = false;
 
+        int player1Wins = 0;
+        int player2Wins = 0;
+        const int MaxWins = 3;
+
         public void Run(bool isPvP, bool isAI = false, bool isEvE = false)
         {
-            GenerateFields();
-
-            while (!IsEndGame())
+            do
             {
-                Render(isPvP, isAI, isEvE);
-                if (!isEvE)
-                {
-                    GetInput();
-                    Update();
-                }
-                else if (isAI && isPlayer1Turn)
-                {
-                    AIShot();
-                    Update();
-                }
-                else if (isEvE)
-                {
-                    AIShot();
-                    Update();
-                    if (!IsEndGame())
-                    {
-                        AIShot(); 
-                        Update();
-                    }
-                }
-            }
+                ResetGame();
+                GenerateFields();
 
-            Console.WriteLine(player1Field.GetShipCount() == 0 ? 
-                (isEvE ? "AI 2 Wins!" : "AI Wins!") : 
-                (isEvE ? "AI 1 Wins!" : "Player 1 Wins!"));
+                while (!IsEndGame())
+                {
+                    Render(isPvP, isAI, isEvE);
+                    PerformTurn(isPvP, isAI, isEvE);
+                    Update();
+                }
+
+                if (player1Field.GetShipCount() == 0)
+                {
+                    player2Wins++;
+                    Console.WriteLine(isEvE ? "AI 2 Wins!" : "Player 2 Wins!");
+                }
+                else
+                {
+                    player1Wins++;
+                    Console.WriteLine(isEvE ? "AI 1 Wins!" : "Player 1 Wins!");
+                }
+
+                Console.WriteLine($"Score: Player 1 - {player1Wins}, Player 2 - {player2Wins}");
+            } while (player1Wins < MaxWins && player2Wins < MaxWins);
+
+            Console.WriteLine(player1Wins == MaxWins ? "Player 1 is the final winner!" : "Player 2 is the final winner!");
         }
+        private void PerformTurn(bool isPvP, bool isAI, bool isEvE)
+        {
+            if (isEvE || (isAI && isPlayer1Turn))
+            {
+                AIShot();
+            }
+            else
+            {
+                GetInput();
+            }
+        }
+
+
+        void ResetGame()
+        {
+            player1Field = new Field(Height, Width);
+            player2Field = new Field(Height, Width);
+            isPlayer1Turn = true;
+            radarActivated = false;
+        }
+
         void Update()
         {
             if (isPlayer1Turn)
@@ -64,6 +85,7 @@
             isPlayer1Turn = !isPlayer1Turn;
             radarActivated = false;
         }
+
         void Render(bool isPvP, bool isAI, bool isEvE)
         {
             Console.Clear();
@@ -225,7 +247,6 @@
             System.Threading.Thread.Sleep(1000);
         }
 
-
         void DrawField(Field field, bool showShips = true)
         {
             Console.WriteLine("   " + string.Join(" ", GetColumnLabels()));
@@ -269,7 +290,5 @@
             }
             return columns.Select(c => c.ToString()).ToArray();
         }
-
-    }  
+    }
 }
-
