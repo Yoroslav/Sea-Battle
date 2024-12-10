@@ -4,8 +4,6 @@
     {
         public const int Width = 2;
         public const int Height = 2;
-        Field player1Field = new Field(Height, Width);
-        Field player2Field = new Field(Height, Width);
         static int shipsCount = 8;
         const char ShipSymbol = 'S';
         const char EmptySymbol = '.';
@@ -16,9 +14,15 @@
         bool isPlayer1Turn = true;
         bool radarActivated = false;
 
-        int player1Wins = 0;
-        int player2Wins = 0;
         const int MaxWins = 3;
+        Player player1;
+        Player player2;
+
+        public Game()
+        {
+            player1 = new Player("Player 1", Height, Width);
+            player2 = new Player("Player 2", Height, Width);
+        }
 
         public void Run(bool isPvP, bool isAI = false, bool isEvE = false)
         {
@@ -34,22 +38,24 @@
                     Update();
                 }
 
-                if (player1Field.GetShipCount() == 0)
-                {
-                    player2Wins++;
-                    Console.WriteLine(isEvE ? "AI 2 Wins!" : "Player 2 Wins!");
-                }
-                else
-                {
-                    player1Wins++;
-                    Console.WriteLine(isEvE ? "AI 1 Wins!" : "Player 1 Wins!");
-                }
+                var winner = player1.Field.GetShipCount() == 0 ? player2 : player1;
+                winner.Wins++;
 
-                Console.WriteLine($"Score: Player 1 - {player1Wins}, Player 2 - {player2Wins}");
-            } while (player1Wins < MaxWins && player2Wins < MaxWins);
+                Console.WriteLine($"{winner.Name} Wins!");
+                Console.WriteLine($"Score: {player1.Name} - {player1.Wins}, {player2.Name} - {player2.Wins}");
+            } while (player1.Wins < MaxWins && player2.Wins < MaxWins);
 
-            Console.WriteLine(player1Wins == MaxWins ? "Player 1 is the final winner!" : "Player 2 is the final winner!");
+            Console.WriteLine(player1.Wins == MaxWins ? $"{player1.Name} is the final winner!" : $"{player2.Name} is the final winner!");
         }
+
+        private void ResetGame()
+        {
+            player1.Field.Reset();
+            player2.Field.Reset();
+            isPlayer1Turn = true;
+            radarActivated = false;
+        }
+
         private void PerformTurn(bool isPvP, bool isAI, bool isEvE)
         {
             if (isEvE || (isAI && isPlayer1Turn))
@@ -62,67 +68,37 @@
             }
         }
 
-
-        void ResetGame()
+        private void Update()
         {
-            player1Field = new Field(Height, Width);
-            player2Field = new Field(Height, Width);
-            isPlayer1Turn = true;
-            radarActivated = false;
-        }
-
-        void Update()
-        {
-            if (isPlayer1Turn)
-            {
-                ProcessShot(playerShot, player2Field);
-            }
-            else
-            {
-                ProcessShot(playerShot, player1Field);
-            }
+            var targetField = isPlayer1Turn ? player2.Field : player1.Field;
+            ProcessShot(playerShot, targetField);
 
             isPlayer1Turn = !isPlayer1Turn;
             radarActivated = false;
         }
 
-        void Render(bool isPvP, bool isAI, bool isEvE)
+        private void Render(bool isPvP, bool isAI, bool isEvE)
         {
             Console.Clear();
 
-            if (isPvP)
-            {
-                Console.WriteLine("Player 1's Battlefield:");
-                DrawField(player1Field);
-                Console.WriteLine("Player 2's Battlefield:");
-                DrawField(player2Field);
-            }
-            else if (isAI)
-            {
-                Console.WriteLine("Your Battlefield:");
-                DrawField(player1Field);
-                Console.WriteLine("AI's Battlefield:");
-                DrawField(player2Field, false);
-            }
-            else if (isEvE)
-            {
-                Console.WriteLine("AI 1's Battlefield:");
-                DrawField(player1Field, false);
-                Console.WriteLine("AI 2's Battlefield:");
-                DrawField(player2Field, false);
-            }
+            ShowBattlefield(player1.Name + "'s Battlefield", player1.Field, isPvP || isAI || isEvE);
+            ShowBattlefield(player2.Name + "'s Battlefield", player2.Field, isPvP || isEvE);
         }
 
-        void GenerateFields()
+        private void ShowBattlefield(string title, Field field, bool showShips)
         {
-            Field[] fields = { player1Field, player2Field };
-            foreach (var field in fields)
-            {
-                GenerateField(field);
-            }
+            Console.WriteLine(title);
+            DrawField(field, showShips);
+            Console.WriteLine();
         }
 
-        void GenerateField(Field field)
+        private void GenerateFields()
+        {
+            GenerateField(player1.Field);
+            GenerateField(player2.Field);
+        }
+
+        private void GenerateField(Field field)
         {
             Random random = new Random();
             for (int i = 0; i < shipsCount; i++)
@@ -138,11 +114,11 @@
             }
         }
 
-        bool IsEndGame() => player1Field.GetShipCount() == 0 || player2Field.GetShipCount() == 0;
+        private bool IsEndGame() => player1.Field.GetShipCount() == 0 || player2.Field.GetShipCount() == 0;
 
-        void GetInput()
+        private void GetInput()
         {
-            Console.WriteLine(isPlayer1Turn ? "Player 1's Turn" : "Player 2's Turn");
+            Console.WriteLine(isPlayer1Turn ? $"{player1.Name}'s Turn" : $"{player2.Name}'s Turn");
             playerShot = GetShot();
 
             if (!radarActivated)
@@ -162,7 +138,7 @@
             }
         }
 
-        (int, int) GetShot()
+        private (int, int) GetShot()
         {
             string input;
             while (true)
@@ -186,7 +162,7 @@
             }
         }
 
-        void ActivateRadar((int, int) shot)
+        private void ActivateRadar((int, int) shot)
         {
             radarActivated = true;
 
@@ -195,17 +171,11 @@
 
             int chosenRange = radarRangeInput == "5" ? 5 : 3;
 
-            if (isPlayer1Turn)
-            {
-                ShowRadar(shot, chosenRange, player2Field);
-            }
-            else
-            {
-                ShowRadar(shot, chosenRange, player1Field);
-            }
+            var enemyField = isPlayer1Turn ? player2.Field : player1.Field;
+            ShowRadar(shot, chosenRange, enemyField);
         }
 
-        void ShowRadar((int, int) shot, int range, Field enemyField)
+        private void ShowRadar((int, int) shot, int range, Field enemyField)
         {
             int startX = shot.Item1 - range / 2;
             int startY = shot.Item2 - range / 2;
@@ -227,18 +197,17 @@
             }
         }
 
-        bool IsValidShot((int, int) shot)
+        private bool IsValidShot((int, int) shot)
         {
             var (x, y) = shot;
             return y >= 0 && y < Height && x >= 0 && x < Width;
         }
 
-        void ProcessShot((int, int) shot, Field targetField)
+        private void ProcessShot((int, int) shot, Field targetField)
         {
             if (targetField.Attack(shot.Item1, shot.Item2))
             {
                 Console.WriteLine("Hit!");
-                shipsCount--;
             }
             else
             {
@@ -247,7 +216,18 @@
             System.Threading.Thread.Sleep(1000);
         }
 
-        void DrawField(Field field, bool showShips = true)
+        private void AIShot()
+        {
+            Random random = new Random();
+            int x = random.Next(Width);
+            int y = random.Next(Height);
+            var shot = (y, x);
+
+            Console.WriteLine($"AI shoots at: {GetColumnLabels()[x]}{y + 1}");
+            ProcessShot(shot, isPlayer1Turn ? player2.Field : player1.Field);
+        }
+
+        private void DrawField(Field field, bool showShips = true)
         {
             Console.WriteLine("   " + string.Join(" ", GetColumnLabels()));
 
@@ -270,18 +250,7 @@
             }
         }
 
-        void AIShot()
-        {
-            Random random = new Random();
-            int x = random.Next(Width);
-            int y = random.Next(Height);
-            var shot = (y, x);
-
-            Console.WriteLine($"AI shoots at: {GetColumnLabels()[x]}{y + 1}");
-            ProcessShot(shot, isPlayer1Turn ? player2Field : player1Field);
-        }
-
-        string[] GetColumnLabels()
+        private string[] GetColumnLabels()
         {
             char[] columns = new char[Width];
             for (int i = 0; i < Width; i++)

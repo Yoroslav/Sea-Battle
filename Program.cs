@@ -5,7 +5,6 @@
         static void Main(string[] args)
         {
             
-        var game = new Game();
         Console.WriteLine("=== Welcome to the Game ===");
         Console.WriteLine("Choose Game Mode:");
         Console.WriteLine("1. PvP");
@@ -25,6 +24,7 @@
         }
         while (mode != "1" && mode != "2" && mode != "3");
 
+        var game = new Game();
         switch (mode)
         {
             case "1":

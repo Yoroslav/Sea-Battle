@@ -55,4 +55,16 @@ class Field
         }
         return count;
     }
+
+    public void Reset()
+    {
+        for (int i = 0; i < Height; i++)
+        {
+            for (int j = 0; j < Width; j++)
+            {
+                Cells[i, j].HasShip = false;
+                Cells[i, j].IsHitted = false;
+            }
+        }
+    }
 }
