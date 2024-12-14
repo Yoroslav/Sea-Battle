@@ -34,13 +34,13 @@
             switch (mode)
             {
                 case "1":
-                    game.Run(isPvP: true);
+                    game.Run(GameMode.PvP);
                     break;
                 case "2":
-                    game.Run(isPvP: false, isAI: true);
+                    game.Run(GameMode.PvE);
                     break;
                 case "3":
-                    game.Run(isPvP: false, isAI: true, isEvE: true);
+                    game.Run(GameMode.EvE);
                     break;
             }
 
