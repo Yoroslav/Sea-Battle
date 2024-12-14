@@ -13,3 +13,5 @@ C:\Users\Yaroslav\Documents\C#\SeaBattle\SeaBattle\obj\Debug\net6.0\refint\SeaBa
 C:\Users\Yaroslav\Documents\C#\SeaBattle\SeaBattle\obj\Debug\net6.0\SeaBattle.pdb
 C:\Users\Yaroslav\Documents\C#\SeaBattle\SeaBattle\obj\Debug\net6.0\SeaBattle.genruntimeconfig.cache
 C:\Users\Yaroslav\Documents\C#\SeaBattle\SeaBattle\obj\Debug\net6.0\ref\SeaBattle.dll
+C:\Users\Yaroslav\Documents\C#\SeaBattle\SeaBattle\bin\Debug\net6.0\Newtonsoft.Json.dll
+C:\Users\Yaroslav\Documents\C#\SeaBattle\SeaBattle\obj\Debug\net6.0\SeaBattle.csproj.CopyComplete

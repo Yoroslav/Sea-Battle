@@ -1,4 +1,5 @@
-﻿namespace SeaBattle
+﻿using Newtonsoft.Json;
+namespace SeaBattle
 {
     public class Game
     {
@@ -17,11 +18,17 @@
         const int MaxWins = 3;
         Player player1;
         Player player2;
+        PlayerProfile player1Profile;
+        PlayerProfile player2Profile;
+        public string Winner { get; private set; }
 
         public Game()
         {
             player1 = new Player("Player 1", Height, Width);
             player2 = new Player("Player 2", Height, Width);
+
+            player1Profile = LoadProfile(player1.Name);
+            player2Profile = LoadProfile(player2.Name);
         }
 
         public void Run(bool isPvP, bool isAI = false, bool isEvE = false)
@@ -41,11 +48,56 @@
                 var winner = player1.Field.GetShipCount() == 0 ? player2 : player1;
                 winner.Wins++;
 
+                if (winner == player1)
+                {
+                    player1Profile.UpdateStats(true);  
+                    player2Profile.UpdateStats(false); 
+                }
+                else
+                {
+                    player2Profile.UpdateStats(true);  
+                    player1Profile.UpdateStats(false); 
+                }
+                if (isPvP)
+                {
+                    Winner = "Player 1";
+                }
+                else
+                {
+                    Winner = "Player 2"; 
+                }
+
                 Console.WriteLine($"{winner.Name} Wins!");
                 Console.WriteLine($"Score: {player1.Name} - {player1.Wins}, {player2.Name} - {player2.Wins}");
             } while (player1.Wins < MaxWins && player2.Wins < MaxWins);
 
+
+            SaveProfile(player1Profile);
+            SaveProfile(player2Profile);
+
             Console.WriteLine(player1.Wins == MaxWins ? $"{player1.Name} is the final winner!" : $"{player2.Name} is the final winner!");
+        }
+
+        private void SaveProfile(PlayerProfile profile)
+        {
+            string filePath = $"{profile.Name}_profile.json";
+            string json = JsonConvert.SerializeObject(profile, Formatting.Indented);
+            File.WriteAllText(filePath, json);
+        }
+
+        private PlayerProfile LoadProfile(string playerName)
+        {
+            string filePath = $"{playerName}_profile.json";
+            if (File.Exists(filePath))
+            {
+                string json = File.ReadAllText(filePath);
+                return JsonConvert.DeserializeObject<PlayerProfile>(json);
+            }
+            else
+            {
+                Console.WriteLine("Profile not found. Creating a new one.");
+                return new PlayerProfile(playerName);
+            }
         }
 
         private void ResetGame()
