@@ -3,11 +3,13 @@
     public string Name;
     public Field Field;
     public int Wins;
+    public int Losses;
 
-    public Player(string name, int height, int width)
+    public Player(PlayerProfile profile, int height, int width)
     {
-        Name = name;
+        Name = profile.Name;
         Field = new Field(height, width);
-        Wins = 0;
+        Wins = profile.Wins;
+        Losses = profile.Losses;
     }
 }

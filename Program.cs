@@ -4,15 +4,19 @@
     {
         static void Main(string[] args)
         {
-            PlayerProfile player1Profile = PlayerProfile.LoadFromFile("Player 1");
-            PlayerProfile player2Profile = PlayerProfile.LoadFromFile("Player 2");
+            Console.WriteLine("=== Welcome to Sea Battle ===");
 
-            Console.WriteLine("=== Current Player Profiles ===");
-            PrintProfile(player1Profile);
-            PrintProfile(player2Profile);
+            Console.WriteLine("\nPlayer 1: Select or Create Profile");
+            PlayerProfile player1Profile = Profile.SelectOrCreateProfile();
 
-            Console.WriteLine("=== Welcome to the Game ===");
-            Console.WriteLine("Choose Game Mode:");
+            Console.WriteLine("\nPlayer 2: Select or Create Profile");
+            PlayerProfile player2Profile = Profile.SelectOrCreateProfile();
+
+            Console.WriteLine("\n=== Current Player Profiles ===");
+            Profile.PrintProfile(player1Profile);
+            Profile.PrintProfile(player2Profile);
+
+            Console.WriteLine("\n=== Choose Game Mode ===");
             Console.WriteLine("1. PvP");
             Console.WriteLine("2. PvE");
             Console.WriteLine("3. EvE");
@@ -60,19 +64,9 @@
             player1Profile.SaveToFile();
             player2Profile.SaveToFile();
 
-            Console.WriteLine("\n=== Updated player profiles ===");
-            PrintProfile(player1Profile);
-            PrintProfile(player2Profile);
-        }
-
-        static void PrintProfile(PlayerProfile profile)
-        {
-            Console.WriteLine($"Name: {profile.Name}");
-            Console.WriteLine($"Wins: {profile.Wins}");
-            Console.WriteLine($"Losses: {profile.Losses}");
-            Console.WriteLine($"SetsWon: {profile.SetsWon}");
-            Console.WriteLine($"SetsPlayed: {profile.SetsPlayed}");
-            Console.WriteLine($"inRate: {profile.WinRate:F2}%\n");
+            Console.WriteLine("\n=== Updated Player Profiles ===");
+            Profile.PrintProfile(player1Profile);
+            Profile.PrintProfile(player2Profile);
         }
     }
 }

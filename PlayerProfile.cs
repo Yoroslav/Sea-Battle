@@ -17,6 +17,7 @@ public class PlayerProfile
         SetsPlayed = 0;
         WinRate = 0;
     }
+
     public void UpdateStats(bool isWinner)
     {
         if (isWinner)
@@ -53,5 +54,19 @@ public class PlayerProfile
             Console.WriteLine($"File {filePath} not found. Creating a new profile");
             return new PlayerProfile(name);
         }
+    }
+
+    public static List<string> GetAllProfiles()
+    {
+        List<string> profiles = new List<string>();
+        string[] files = Directory.GetFiles(Directory.GetCurrentDirectory(), "*_profile.json");
+
+        foreach (var file in files)
+        {
+            string profileName = Path.GetFileNameWithoutExtension(file).Replace("_profile", "");
+            profiles.Add(profileName);
+        }
+
+        return profiles;
     }
 }

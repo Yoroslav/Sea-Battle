@@ -30,8 +30,11 @@ public class Game
 
     public Game()
     {
-        player1 = new Player("Player 1", Height, Width);
-        player2 = new Player("Player 2", Height, Width);
+        player1Profile = Profile.SelectOrCreateProfile();
+        player2Profile = Profile.SelectOrCreateProfile();
+
+        player1 = new Player(player1Profile, Height, Width);  
+        player2 = new Player(player2Profile, Height, Width);  
 
         player1Profile = LoadProfile(player1.Name);
         player2Profile = LoadProfile(player2.Name);
@@ -51,32 +54,39 @@ public class Game
                 Update();
             }
 
-            var winner = player1.Field.GetShipCount() == 0 ? player2 : player1;
-            winner.Wins++;
+            UpdateGameStats(player1, player2, player1Profile, player2Profile);
 
-            if (winner == player1)
-            {
-                player1Profile.UpdateStats(true);
-                player2Profile.UpdateStats(false);
-            }
-            else
-            {
-                player2Profile.UpdateStats(true);
-                player1Profile.UpdateStats(false);
-            }
-
-            Winner = winner.Name;
-
-            Console.WriteLine($"{winner.Name} Wins!");
-            Console.WriteLine($"Score: {player1.Name} - {player1.Wins}, {player2.Name} - {player2.Wins}");
         } while (player1.Wins < MaxWins && player2.Wins < MaxWins);
 
         SaveProfile(player1Profile);
         SaveProfile(player2Profile);
-
         Console.WriteLine(player1.Wins == MaxWins ? $"{player1.Name} is the final winner!" : $"{player2.Name} is the final winner!");
     }
 
+    void UpdateGameStats(Player player1, Player player2, PlayerProfile player1Profile, PlayerProfile player2Profile)
+    {
+        var winner = player1.Field.GetShipCount() == 0 ? player2 : player1;
+        winner.Wins++;
+
+        if (winner == player1)
+        {
+            player1Profile.UpdateStats(true);
+            player2Profile.UpdateStats(false);
+        }
+        else
+        {
+            player2Profile.UpdateStats(true);
+            player1Profile.UpdateStats(false);
+        }
+
+        Winner = winner.Name;
+
+        Console.WriteLine($"{winner.Name} Wins!");
+        Console.WriteLine($"{player1.Name} - {player1.Wins} Wins, {player1.Losses} Losses");
+        Console.WriteLine($"{player2.Name} - {player2.Wins} Wins, {player2.Losses} Losses");
+        Console.WriteLine($"Current Score: {player1.Name} - {player1.Wins}, {player2.Name} - {player2.Wins}");
+        Console.ReadKey();
+    }
     private void SaveProfile(PlayerProfile profile)
     {
         string filePath = $"{profile.Name}_profile.json";
