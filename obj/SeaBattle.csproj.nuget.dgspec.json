@@ -43,6 +43,10 @@
             "Newtonsoft.Json": {
               "target": "Package",
               "version": "[13.0.3, )"
+            },
+            "SFML.Net": {
+              "target": "Package",
+              "version": "[2.6.0, )"
             }
           },
           "imports": [
