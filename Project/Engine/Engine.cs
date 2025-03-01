@@ -1,4 +1,5 @@
 ﻿using SeaBattle.Project.Engine;
+using SeaBattle.Project.Game;
 using SFML.Graphics;
 using SFML.System;
 using SFML.Window;
@@ -8,11 +9,10 @@ public class Engine
     private readonly IGameRules _gameRules;
     private readonly InputHandler _inputHandler;
     private readonly RenderWindow _window;
-
-    public Engine(IGameRules gameRules, uint width = 800, uint height = 600, string title = "SeaBattle")
+    public Engine(IGameRules gameRules, RenderWindow window, uint width = 800, uint height = 600, string title = "SeaBattle")
     {
         _gameRules = gameRules;
-        _inputHandler = new KeyboardInputHandler();
+        _inputHandler = new KeyboardInputHandler(window, (SeaBattleGame)gameRules);
         _window = new RenderWindow(new VideoMode(width, height), title);
         _window.Closed += (_, _) => _window.Close();
         _gameRules.Initialize();

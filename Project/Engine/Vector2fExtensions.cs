@@ -1,10 +1,11 @@
-﻿using SFML.System;
+﻿using SFML.Graphics;
+using SFML.System;
 
 namespace SeaBattle.Project.Engine
 {
-    public static class Vector2fExtensions
+    public static class Vector2Extensions
     {
-        public static Vector2f ToTilePosition(this Vector2f worldPos, int tileSize)
-            => new(worldPos.X / tileSize, worldPos.Y / tileSize);
+        public static Vector2f ToWorldPos(this Vector2i screenPos, RenderWindow window)
+            => window.MapPixelToCoords(screenPos);
     }
 }

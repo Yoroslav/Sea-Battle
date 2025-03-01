@@ -1,71 +1,73 @@
-﻿public struct Cell
+﻿namespace SeaBattle.Game
 {
-    public bool HasShip; 
-    public bool IsHit;  
-}
-
-public class Field
-{
-    public Cell[,] Cells { get; private set; }
-    public int Height { get; }
-    public int Width { get; }
-
-    public Field(int height, int width)
+    public class Field
     {
-        Height = height;
-        Width = width;
-        Cells = new Cell[Height, Width];
-    }
+        public Cell[,] Cells { get; }
+        public int Height { get; }
+        public int Width { get; }
 
-    public void PlaceShip(int x, int y)
-    {
-        if (AreCoordinatesValid(x, y))
+        public Field(int height, int width)
         {
-            Cells[x, y].HasShip = true;
+            Height = height;
+            Width = width;
+            Cells = new Cell[height, width];
+            for (int y = 0; y < height; y++)
+                for (int x = 0; x < width; x++)
+                {
+                    Cells[y, x] = new Cell();
+                }
         }
-    }
 
-
-    public bool Attack(int x, int y)
-    {
-        if (AreCoordinatesValid(x, y))
+        public bool AreCoordinatesValid(int y, int x)
         {
-            ref var cell = ref Cells[x, y];
-            if (cell.IsHit)
+            return x >= 0 && y >= 0 && x < Width && y < Height;
+        }
+
+        public bool Attack(int y, int x)
+        {
+            if (AreCoordinatesValid(y, x))
             {
-                return false;
+                Cells[y, x].IsHit = true;
+                return Cells[y, x].HasShip;
             }
-            cell.IsHit = true;
-            return cell.HasShip; 
+            return false;
         }
-        return false;
-    }
 
-    public bool AreCoordinatesValid(int x, int y)
-        => x >= 0 && y >= 0 && x < Height && y < Width;
-
-    public int GetShipCount()
-    {
-        int count = 0;
-        foreach (var cell in Cells)
+        public int GetShipCount()
         {
-            if (cell.HasShip && !cell.IsHit)
+            int count = 0;
+            foreach (var cell in Cells)
             {
-                count++;
+                if (cell.HasShip && !cell.IsHit)
+                {
+                    count++;
+                }
             }
+            return count;
         }
-        return count;
-    }
 
-    public void Reset()
-    {
-        for (int i = 0; i < Height; i++)
+        public void Reset()
         {
-            for (int j = 0; j < Width; j++)
+            for (int y = 0; y < Height; y++)
+                for (int x = 0; x < Width; x++)
+                {
+                    Cells[y, x] = new Cell();
+                }
+        }
+
+        public void PlaceShip(int y, int x)
+        {
+            if (AreCoordinatesValid(y, x))
             {
-                Cells[i, j].HasShip = false;
-                Cells[i, j].IsHit = false;
+                Cells[y, x].HasShip = true;
             }
         }
+    }
+
+    public struct Cell
+    {
+        public bool HasShip;
+        public bool IsHit;
+        public bool IsRevealed;
     }
 }

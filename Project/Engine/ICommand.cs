@@ -1,7 +1,6 @@
-﻿namespace SeaBattle.Project.Engine
+﻿using SeaBattle.Project.Game;
+
+public interface ICommand
 {
-    public interface ICommand
-    {
-        void Execute(IGameRules game);
-    }
+    void Execute(Player player);
 }
